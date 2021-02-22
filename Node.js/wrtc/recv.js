@@ -17,11 +17,13 @@ const mockUpgrader = {
 upgradeInbound: maConn => maConn,
 upgradeOutbound: maConn => maConn
 }
-
+var args = process.argv.slice(2);
+if (args.length < 1) {console.log('args: ipaddress');process.exit(-1)
+;}
 let WS = new WebRTCDirect({wrtc: wrtc, upgrader: mockUpgrader, ICEServers: ["stun:stun.l.google.com:19302"] })
 ;(async () => {
 
-const addr = multiaddr('/ip4/80.30.43.66/tcp/7788/http/p2p-webrtc-direct')
+const addr = multiaddr('/ip4/'+args[0].toString()+'/tcp/7788/http/p2p-webrtc-direct')
 
 
 const conn = await WS.dial(addr)

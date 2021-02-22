@@ -2,21 +2,19 @@
 'use strict'
 
 const fs = require('fs');
-const Libp2p = require('libp2p')
+const Libp2p = require('../..')
 const TCP = require('libp2p-tcp')
-const WS = require('libp2p-websockets')
-const filters = require('libp2p-websockets/src/filters')
 const { NOISE } = require('libp2p-noise')
 const Bootstrap = require('libp2p-bootstrap')
 const MPLEX = require('libp2p-mplex')
-
-const pipe = require('it-pull')
+const filters = require('libp2p-websockets/src/filters')
+const pipe = require('it-pipe')
 const concat = require('it-concat')
 var args = process.argv.slice(2);
-if (args.length <= 1) {console.log('args: p2pid filetosend');process.exit(-1);}
-const transportKey = WS.prototype[Symbol.toStringTag]
+if (args.length <= 3) {console.log('args: p2pid filetosend iptoconnect');process.exit(-1);}
+const transportKey = TCP.prototype[Symbol.toStringTag]
 const bootstrapers = [
-'/ip4/2.229.132.52/tcp/2002/p2p/'+args[0].toString()
+'/ip4/'+args[1].toString()+'/tcp/2002/p2p/'+args[0].toString()
 ]
 
 const fname = args[1].toString()
@@ -35,11 +33,10 @@ console.log('read data: ', data.length, 'bytes from file ', fname)
 ;(async () => {
   const node = await Libp2p.create({
     addresses: {
-      listen: ['/dns4/zadikpoc.ddns.net/tcp/7788/ws']
-      //listen: ['/ip4/0.0.0.0/tcp/0']
+      listen: ['/ip4/0.0.0.0/tcp/5555']
     },
     modules: {
-      transport: [WS],
+      transport: [TCP],
       streamMuxer: [MPLEX],
       connEncryption: [NOISE],
       peerDiscovery: [Bootstrap]
@@ -64,6 +61,7 @@ console.log('read data: ', data.length, 'bytes from file ', fname)
   node.connectionManager.on('peer:connect', (connection) => {
     console.log('Connection established to:', connection.remotePeer.toB58String())  // Emitted when a peer has been found
     var k = 100; 
+    // create a new stream within the connection
     ;(async () => {
       while (k--) {         
         const {collect, take, stream } = await node.dialProtocol(connection.remotePeer, '/data')
@@ -78,6 +76,8 @@ console.log('read data: ', data.length, 'bytes from file ', fname)
   node.on('peer:discovery', (peerId) => {
     // No need to dial, autoDial is on
     console.log('Discovered:', peerId.toB58String())
-    })
+
+ })
+
   await node.start()
 })();

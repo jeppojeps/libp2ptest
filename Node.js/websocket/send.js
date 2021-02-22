@@ -9,13 +9,13 @@ const { NOISE } = require('libp2p-noise')
 const Bootstrap = require('libp2p-bootstrap')
 const MPLEX = require('libp2p-mplex')
 
-const pipe = require('it-pull')
+const pipe = require('it-pipe')
 const concat = require('it-concat')
 var args = process.argv.slice(2);
-if (args.length <= 1) {console.log('args: p2pid filetosend');process.exit(-1);}
+if (args.length <= 2) {console.log('args: p2pid filetosend hostname');process.exit(-1);}
 const transportKey = WS.prototype[Symbol.toStringTag]
 const bootstrapers = [
-'/dns4/raspipowapoc.ddns.net/tcp/2002/ws/p2p/'+args[0].toString()
+'/dns4/'+args[2]+'/tcp/2002/ws/p2p/'+args[0].toString()
 ]
 
 const fname = args[1].toString()
@@ -34,7 +34,7 @@ console.log('read data: ', data.length, 'bytes from file ', fname)
 ;(async () => {
   const node = await Libp2p.create({
     addresses: {
-      listen: ['/dns4/zadikpoc.ddns.net/tcp/7788/ws']
+      listen: ['/dns4/localhost/tcp/7788/ws']
     },
     modules: {
       transport: [WS],
@@ -79,7 +79,7 @@ console.log('read data: ', data.length, 'bytes from file ', fname)
     // No need to dial, autoDial is on
     console.log('Discovered:', peerId.toB58String())
     // create a new stream within the connection
-  )}
+  })
 
   await node.start()
 })();

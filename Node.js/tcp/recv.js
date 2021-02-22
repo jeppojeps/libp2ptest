@@ -4,13 +4,12 @@
 
 const Libp2p = require('../..')
 const TCP = require('libp2p-tcp')
-const filters = require('libp2p-websockets/src/filters')
 const { NOISE } = require('libp2p-noise')
 const MPLEX = require('libp2p-mplex')
 const fs = require('fs');
 const pipe = require('it-pipe')
 const concat = require('it-concat')
-const transportKey = WS.prototype[Symbol.toStringTag]
+const transportKey = TCP.prototype[Symbol.toStringTag]
 
 
 const createNode = async () => {
@@ -30,13 +29,12 @@ const createNode = async () => {
   return node
 }
 function printAddrs (node, number) {
-  console.log('node %s is listening on:', node.peerId.toB58String())
-  node.multiaddrs.forEach((ma) => console.log(`${ma.toString()}/p2p/${node.peerId.toB58String()}`))
+  console.log('node id is %s:', node.peerId.toB58String())
 }
 
 
 ;(async () => {
-  const [node1] = await createNode()
+  const [node1] = await Promise.all([createNode()])
 
   printAddrs(node1, '1')
 

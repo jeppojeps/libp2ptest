@@ -40,7 +40,7 @@ function printAddrs (node, number) {
 
 
 ;(async () => {
-  const [node1] = await createNode()
+  const [node1] = await Promise.all([createNode()])
 
   printAddrs(node1, '1')
 

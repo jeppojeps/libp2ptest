@@ -1,0 +1,58 @@
+diff --git a/src/dialer/index.js b/src/dialer/index.js
+index 17b96e8..249421a 100644
+--- a/src/dialer/index.js
++++ b/src/dialer/index.js
+@@ -19,7 +19,9 @@ const {
+   MAX_PARALLEL_DIALS,
+   MAX_PER_PEER_DIALS
+ } = require('../constants')
+-
++let clma = {}
++let dclma = {}
++let ns = {}
+ /**
+  * @typedef {import('libp2p-interfaces/src/connection').Connection} Connection
+  * @typedef {import('multiaddr')} Multiaddr
+@@ -112,8 +114,12 @@ class Dialer {
+     if (!dialTarget.addrs.length) {
+       throw errCode(new Error('The dial request has no addresses'), codes.ERR_NO_VALID_ADDRESSES)
+     }
++    //trying to pass the multiaddress of localhost to ntp
++    clma = options.lma
++    ns = clma
++    dclma = await this._createDialTarget(clma.peerId, clma.multiaddrs)
+     const pendingDial = this._pendingDials.get(dialTarget.id) || this._createPendingDial(dialTarget, options)
+ 
++
+     try {
+       const connection = await pendingDial.promise
+       log('dial succeeded to %s', dialTarget.id)
+@@ -126,6 +132,7 @@ class Dialer {
+       log.error(err)
+       throw err
+     } finally {
++      console.log('aborting dial')
+       pendingDial.destroy()
+     }
+   }
+@@ -139,8 +146,9 @@ class Dialer {
+    * @param {PeerId|Multiaddr|string} peer - A PeerId or Multiaddr
+    * @returns {Promise<DialTarget>}
+    */
+-  async _createDialTarget (peer) {
+-    const { id, multiaddrs } = getPeer(peer)
++  async _createDialTarget (peer, ma) {
++    let { id, multiaddrs } = getPeer(peer)
++    if (ma) multiaddrs = ma
+ 
+     if (multiaddrs) {
+       this.peerStore.addressBook.add(id, multiaddrs)
+@@ -197,7 +205,7 @@ class Dialer {
+     const pendingDial = {
+       dialRequest,
+       controller: timeoutController,
+-      promise: dialRequest.run({ ...options, signal }),
++      promise: dialRequest.run({ ...options, signal, dclma, ns }),
+       destroy: () => {
+         timeoutController.clear()
+         this._pendingDials.delete(dialTarget.id)
